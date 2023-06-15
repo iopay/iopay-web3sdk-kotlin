@@ -5,10 +5,10 @@ which simplifies the process of querying balance, transactions and executing con
 ## Quick Start
 
 ### Integration
-    You can directly import the web3 module in your code and then synchronize it.
-    ```
-        implementation project(':web3')
-    ```
+You can directly import the web3 module in your code and then synchronize it.
+```kotlin
+   implementation project(':web3')
+```
 
 ### Create a Web3Manager
 
