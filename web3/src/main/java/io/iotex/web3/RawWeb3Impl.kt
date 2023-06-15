@@ -29,7 +29,7 @@ import java.math.BigInteger
 class RawWeb3Impl(
     private val web3j: Web3j,
     private val chainId: Long,
-    private val privateKey: String?
+    private val privateKey: String
 ) : Web3Manger {
 
     private val processor by lazy {

@@ -80,7 +80,7 @@ interface Web3Manger {
 
     companion object {
 
-        fun build(rpc: String, chainId: Long, privateKey: String?): Web3Manger {
+        fun build(rpc: String, chainId: Long, privateKey: String): Web3Manger {
             val web3j = Web3j.build(HttpService(rpc))
             return RawWeb3Impl(web3j, chainId, privateKey)
         }
