@@ -15,11 +15,7 @@ You can directly import the web3 module in your code and then synchronize it.
 ```kotlin
     // To get started, you need to create a Web3manager instance that supports querying contracts,
     // reading and writing contract data, and signing data.
-    val web3Manger = Web3Manager.build(rpc, chainId, privateKey)
-
-    // You can create a Web3Manager instance with only the wallet address even if you don't have the private key. 
-    // However, this instance will only support querying contract functions.
-    val web3Manger = Web3Manager.build(rpc, fromAddress)
+    val web3Manger = Web3Manager.build(rpc, chainId, fromAddress)
 ```
 
 ### Code Example
