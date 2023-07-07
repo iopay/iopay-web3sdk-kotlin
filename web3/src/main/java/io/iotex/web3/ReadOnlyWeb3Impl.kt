@@ -85,9 +85,10 @@ class ReadOnlyWeb3Impl(
         to: String,
         value: BigInteger,
         gasPrice: BigInteger,
-        gasLimit: BigInteger
+        gasLimit: BigInteger,
+        privateKey: String
     ): EthSendTransaction? {
-        return null
+        throw IllegalStateException("Can not send transaction without private key!")
     }
 
     override fun transferErc20(
@@ -95,20 +96,10 @@ class ReadOnlyWeb3Impl(
         to: String,
         value: BigInteger,
         gasPrice: BigInteger,
-        gasLimit: BigInteger
+        gasLimit: BigInteger,
+        privateKey: String
     ): EthSendTransaction? {
-        val function = Function(
-            FUNC_TRANSFER,
-            listOf<Type<*>>(
-                Address(160, to),
-                Uint256(value)
-            ), emptyList()
-        )
-        val `data` = FunctionEncoder.encode(function)
-        return runCatching {
-            transactionManager
-                .sendTransaction(gasPrice, gasLimit, contract, `data`, BigInteger.ZERO)
-        }.getOrNull()
+        throw IllegalStateException("Can not send transaction without private key!")
     }
 
     override fun transferErc721(
@@ -117,19 +108,9 @@ class ReadOnlyWeb3Impl(
         tokenId: BigInteger,
         gasPrice: BigInteger,
         gasLimit: BigInteger,
+        privateKey: String
     ): EthSendTransaction? {
-        val function = Function(
-            FUNC_TRANSFER_NFT,
-            listOf<Type<*>>(
-                Address(160, transactionManager.fromAddress),
-                Address(160, to),
-                Uint256(tokenId)
-            ), emptyList()
-        )
-        val `data` = FunctionEncoder.encode(function)
-        return runCatching {
-            transactionManager.sendTransaction(gasPrice, gasLimit, contract, `data`, BigInteger.ZERO)
-        }.getOrNull()
+        throw IllegalStateException("Can not send transaction without private key!")
     }
 
     override fun transferErc1155(
@@ -139,21 +120,9 @@ class ReadOnlyWeb3Impl(
         value: BigInteger,
         gasPrice: BigInteger,
         gasLimit: BigInteger,
+        privateKey: String
     ): EthSendTransaction? {
-        val function = Function(
-            FUNC_TRANSFER_NFT,
-            listOf<Type<*>>(
-                Address(160, transactionManager.fromAddress),
-                Address(160, to),
-                Uint256(tokenId),
-                Uint256(value),
-                DynamicBytes("0x".toByteArray())
-            ), emptyList()
-        )
-        val `data` = FunctionEncoder.encode(function)
-        return runCatching {
-            transactionManager.sendTransaction(gasPrice, gasLimit, contract, `data`, BigInteger.ZERO)
-        }.getOrNull()
+        throw IllegalStateException("Can not send transaction without private key!")
     }
 
     override fun executeTransaction(
@@ -161,11 +130,10 @@ class ReadOnlyWeb3Impl(
         value: BigInteger,
         gasPrice: BigInteger,
         gasLimit: BigInteger,
-        `data`: String
+        `data`: String,
+        privateKey: String
     ): EthSendTransaction? {
-        return runCatching {
-            transactionManager.sendTransaction(gasPrice, gasLimit, contract, `data`, value)
-        }.getOrNull()
+        throw IllegalStateException("Can not send transaction without private key!")
     }
 
     override fun gasPrice(): BigInteger {
@@ -190,8 +158,8 @@ class ReadOnlyWeb3Impl(
         }.getOrNull() ?: false
     }
 
-    override fun signMessage(message: ByteArray, addPrefix: Boolean): String {
-        return "0x"
+    override fun signMessage( privateKey: String, message: ByteArray, addPrefix: Boolean): String {
+        throw IllegalStateException("Can not send transaction without private key!")
     }
 
     override fun queryTransactionReceipt(transactionHash: String): TransactionReceipt? {
@@ -243,10 +211,5 @@ class ReadOnlyWeb3Impl(
                 tokenId
             ).send().toInt()
         }.getOrNull() ?: 0
-    }
-
-    companion object {
-        const val FUNC_TRANSFER = "transfer"
-        const val FUNC_TRANSFER_NFT = "safeTransferFrom"
     }
 }

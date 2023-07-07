@@ -38,11 +38,12 @@ Check token balance, support batch query.
 
 Transfer currency
 ```kotlin
+    val privateKey = "Your private key"
     val to = "Received wallet address"
     val value = Convert.toWei("1", Convert.Unit.ETHER).toBigInteger()
     val gasPrice = DefaultGasProvider.GAS_PRICE
     val gasLimit = DefaultGasProvider.GAS_LIMIT
-    val transaction = web3Manger.transferCurrency(to, value, gasPrice, gasLimit)
+    val transaction = web3Manger.transferCurrency(to, value, gasPrice, gasLimit, privateKey)
     if (transaction != null) {
         val receipt = web3Manger.queryTransactionReceipt(transaction.transactionHash)
         print(receipt?.isStatusOK)
@@ -51,12 +52,13 @@ Transfer currency
 
 Transfer tokens
 ```kotlin
+    val privateKey = "Your private key"
     val contract = "Erc20 contract address"
     val to = "Received wallet address"
     val value = Convert.toWei("1", Convert.Unit.ETHER).toBigInteger()
     val gasPrice = DefaultGasProvider.GAS_PRICE
     val gasLimit = DefaultGasProvider.GAS_LIMIT
-    val transaction = web3Manger.transferErc20(contract, to, value, gasPrice, gasLimit)
+    val transaction = web3Manger.transferErc20(contract, to, value, gasPrice, gasLimit, privateKey)
     if (transaction != null) {
         val receipt = web3Manger.queryTransactionReceipt(transaction.transactionHash)
         print(receipt?.isStatusOK)

@@ -8,8 +8,6 @@ import java.math.BigInteger
 
 interface Web3Manger {
 
-
-
     fun getCurrencyBalance(vararg address: String): List<BigInteger>
 
     fun getErc20Balance(vararg contract: String): List<BigInteger>
@@ -18,7 +16,8 @@ interface Web3Manger {
         to: String,
         value: BigInteger,
         gasPrice: BigInteger,
-        gasLimit: BigInteger
+        gasLimit: BigInteger,
+        privateKey: String
     ): EthSendTransaction?
 
     fun transferErc20(
@@ -26,7 +25,8 @@ interface Web3Manger {
         to: String,
         value: BigInteger,
         gasPrice: BigInteger,
-        gasLimit: BigInteger
+        gasLimit: BigInteger,
+        privateKey: String
     ): EthSendTransaction?
 
     fun transferErc721(
@@ -35,6 +35,7 @@ interface Web3Manger {
         tokenId: BigInteger,
         gasPrice: BigInteger,
         gasLimit: BigInteger,
+        privateKey: String
     ): EthSendTransaction?
 
     fun transferErc1155(
@@ -44,6 +45,7 @@ interface Web3Manger {
         value: BigInteger,
         gasPrice: BigInteger,
         gasLimit: BigInteger,
+        privateKey: String
     ): EthSendTransaction?
 
     fun executeTransaction(
@@ -51,7 +53,8 @@ interface Web3Manger {
         value: BigInteger,
         gasPrice: BigInteger,
         gasLimit: BigInteger,
-        `data`: String
+        `data`: String,
+        privateKey: String
     ): EthSendTransaction?
 
     fun queryTransactionReceipt(transactionHash: String): TransactionReceipt?
@@ -60,7 +63,7 @@ interface Web3Manger {
 
     fun estimate(to: String, `data`: String): BigInteger
 
-    fun signMessage(message: ByteArray, addPrefix: Boolean = false): String
+    fun signMessage(privateKey: String, message: ByteArray, addPrefix: Boolean = false): String
 
     fun isContract(contract: String): Boolean
 

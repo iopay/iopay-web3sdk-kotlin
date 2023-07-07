@@ -19,6 +19,7 @@ import org.web3j.protocol.core.methods.response.EthGetBalance
 import org.web3j.protocol.core.methods.response.EthSendTransaction
 import org.web3j.protocol.core.methods.response.TransactionReceipt
 import org.web3j.tx.RawTransactionManager
+import org.web3j.tx.ReadonlyTransactionManager
 import org.web3j.tx.TransactionManager
 import org.web3j.tx.gas.DefaultGasProvider
 import org.web3j.tx.response.PollingTransactionReceiptProcessor
@@ -29,7 +30,7 @@ import java.math.BigInteger
 class RawWeb3Impl(
     private val web3j: Web3j,
     private val chainId: Long,
-    private val privateKey: String
+    private val from: String
 ) : Web3Manger {
 
     private val processor by lazy {
@@ -40,12 +41,16 @@ class RawWeb3Impl(
         )
     }
 
-    private val transactionManager by lazy {
+    private val readOnlyTransactionManager by lazy {
+        ReadonlyTransactionManager(web3j, from)
+    }
+
+    private fun rawTransactionManager(privateKey: String): RawTransactionManager {
         val isValid = WalletUtils.isValidPrivateKey(privateKey)
         if (!isValid) throw java.lang.IllegalArgumentException("Private key is invalid")
         val ecKeyPair = ECKeyPair.create(BigInteger(Numeric.cleanHexPrefix(privateKey), 16))
         val credentials = Credentials.create(ecKeyPair)
-        RawTransactionManager(web3j, credentials, chainId)
+        return RawTransactionManager(web3j, credentials, chainId)
     }
 
     override fun getCurrencyBalance(vararg address: String): List<BigInteger> {
@@ -63,14 +68,14 @@ class RawWeb3Impl(
     override fun getErc20Balance(vararg contract: String): List<BigInteger> {
         val function = Function(
             "balanceOf",
-            listOf<Type<*>>(Address(160, transactionManager.fromAddress)),
+            listOf<Type<*>>(Address(160, from)),
             listOf<TypeReference<*>>(object : TypeReference<Uint256>() {})
         )
         val data = FunctionEncoder.encode(function)
         val batch = web3j.newBatch()
         contract.forEach {
             val transaction =
-                Transaction.createEthCallTransaction(transactionManager.fromAddress, it, data)
+                Transaction.createEthCallTransaction(from, it, data)
             val request = web3j.ethCall(transaction, DefaultBlockParameterName.LATEST)
             batch.add(request)
         }
@@ -88,13 +93,14 @@ class RawWeb3Impl(
         to: String,
         value: BigInteger,
         gasPrice: BigInteger,
-        gasLimit: BigInteger
+        gasLimit: BigInteger,
+        privateKey: String
     ): EthSendTransaction? {
         val nonce = transactionNonce()
         val transaction =
             RawTransaction.createEtherTransaction(nonce, gasPrice, gasLimit, to, value)
         return runCatching {
-            transactionManager.signAndSend(transaction)
+            rawTransactionManager(privateKey).signAndSend(transaction)
         }.getOrNull()
     }
 
@@ -103,7 +109,8 @@ class RawWeb3Impl(
         to: String,
         value: BigInteger,
         gasPrice: BigInteger,
-        gasLimit: BigInteger
+        gasLimit: BigInteger,
+        privateKey: String
     ): EthSendTransaction? {
         val function = Function(
             FUNC_TRANSFER,
@@ -114,7 +121,7 @@ class RawWeb3Impl(
         )
         val `data` = FunctionEncoder.encode(function)
         return runCatching {
-            transactionManager
+            rawTransactionManager(privateKey)
                 .sendTransaction(gasPrice, gasLimit, contract, `data`, BigInteger.ZERO)
         }.getOrNull()
     }
@@ -125,7 +132,9 @@ class RawWeb3Impl(
         tokenId: BigInteger,
         gasPrice: BigInteger,
         gasLimit: BigInteger,
+        privateKey: String
     ): EthSendTransaction? {
+        val transactionManager = rawTransactionManager(privateKey)
         val function = Function(
             FUNC_TRANSFER_NFT,
             listOf<Type<*>>(
@@ -147,7 +156,9 @@ class RawWeb3Impl(
         value: BigInteger,
         gasPrice: BigInteger,
         gasLimit: BigInteger,
+        privateKey: String
     ): EthSendTransaction? {
+        val transactionManager = rawTransactionManager(privateKey)
         val function = Function(
             FUNC_TRANSFER_NFT,
             listOf<Type<*>>(
@@ -169,10 +180,11 @@ class RawWeb3Impl(
         value: BigInteger,
         gasPrice: BigInteger,
         gasLimit: BigInteger,
-        `data`: String
+        `data`: String,
+        privateKey: String
     ): EthSendTransaction? {
         return runCatching {
-            transactionManager.sendTransaction(gasPrice, gasLimit, contract, `data`, value)
+            rawTransactionManager(privateKey).sendTransaction(gasPrice, gasLimit, contract, `data`, value)
         }.getOrNull()
     }
 
@@ -184,7 +196,7 @@ class RawWeb3Impl(
 
     override fun estimate(to: String, `data`: String): BigInteger {
         val transaction =
-            Transaction.createEthCallTransaction(transactionManager.fromAddress, to, data)
+            Transaction.createEthCallTransaction(from, to, data)
         return runCatching {
             val result = web3j.ethEstimateGas(transaction).send()?.result
             BigInteger(Numeric.cleanHexPrefix(result), 16)
@@ -198,7 +210,7 @@ class RawWeb3Impl(
         }.getOrNull() ?: false
     }
 
-    override fun signMessage(message: ByteArray, addPrefix: Boolean): String {
+    override fun signMessage(privateKey: String, message: ByteArray, addPrefix: Boolean): String {
         var `data` = message
         if (addPrefix) {
             val messagePrefix = "\u0019Ethereum Signed Message:\n"
@@ -230,7 +242,7 @@ class RawWeb3Impl(
     override fun transactionNonce(): BigInteger? {
         return runCatching {
             web3j.ethGetTransactionCount(
-                transactionManager.fromAddress, DefaultBlockParameterName.PENDING
+                from, DefaultBlockParameterName.PENDING
             ).send().transactionCount
         }.getOrNull()
     }
@@ -241,32 +253,32 @@ class RawWeb3Impl(
 
     override fun erc20Name(contract: String): String {
         return runCatching {
-            Erc20.load(contract, web3j, transactionManager).name().send()
+            Erc20.load(contract, web3j, readOnlyTransactionManager).name().send()
         }.getOrNull() ?: ""
     }
 
     override fun erc20Symbol(contract: String): String {
         return runCatching {
-            Erc20.load(contract, web3j, transactionManager).symbol().send()
+            Erc20.load(contract, web3j, readOnlyTransactionManager).symbol().send()
         }.getOrNull() ?: ""
     }
 
     override fun erc20Decimals(contract: String): Int {
         return runCatching {
-            Erc20.load(contract, web3j, transactionManager).decimals().send()?.toInt()
+            Erc20.load(contract, web3j, readOnlyTransactionManager).decimals().send()?.toInt()
         }.getOrNull() ?: Convert.Unit.ETHER.weiFactor.toInt()
     }
 
     override fun nftOwnerOf(contract: String, tokenId: BigInteger): String? {
         return kotlin.runCatching {
-            NFT.load(contract, web3j, transactionManager).ownerOf(tokenId).send()
+            NFT.load(contract, web3j, readOnlyTransactionManager).ownerOf(tokenId).send()
         }.getOrNull()
     }
 
     override fun nftBalanceOf(contract: String, tokenId: BigInteger): Int {
         return kotlin.runCatching {
-            NFT.load(contract, web3j, transactionManager).balanceOf(
-                transactionManager.fromAddress,
+            NFT.load(contract, web3j, readOnlyTransactionManager).balanceOf(
+                from,
                 tokenId
             ).send().toInt()
         }.getOrNull() ?: 0

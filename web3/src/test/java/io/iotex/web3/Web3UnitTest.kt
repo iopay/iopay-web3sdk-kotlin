@@ -32,10 +32,11 @@ class Web3UnitTest {
     @Test
     fun testTransferCurrency() {
         val to = "0x2ee1d96cb76579e2c64c9bb045443fb3849491d2"
+        val privateKey = "Your private key"
         val value = Convert.toWei("1", Convert.Unit.ETHER).toBigInteger()
         val gasPrice = DefaultGasProvider.GAS_PRICE
         val gasLimit = DefaultGasProvider.GAS_LIMIT
-        val transaction = web3Manger.transferCurrency(to, value, gasPrice, gasLimit)
+        val transaction = web3Manger.transferCurrency(to, value, gasPrice, gasLimit, privateKey)
         if (transaction != null) {
             val receipt = web3Manger.queryTransactionReceipt(transaction.transactionHash)
             print(receipt?.isStatusOK)
@@ -46,10 +47,11 @@ class Web3UnitTest {
     fun testTransferErc20() {
         val contract = "0xd77f23c1de0adeda398a521a40df841159d851b6"
         val to = "0x2ee1d96cb76579e2c64c9bb045443fb3849491d2"
+        val privateKey = "Your private key"
         val value = Convert.toWei("1", Convert.Unit.ETHER).toBigInteger()
         val gasPrice = DefaultGasProvider.GAS_PRICE
         val gasLimit = DefaultGasProvider.GAS_LIMIT
-        val transaction = web3Manger.transferErc20(contract, to, value, gasPrice, gasLimit)
+        val transaction = web3Manger.transferErc20(contract, to, value, gasPrice, gasLimit, privateKey)
         if (transaction != null) {
             val receipt = web3Manger.queryTransactionReceipt(transaction.transactionHash)
             print(receipt?.isStatusOK)
@@ -59,7 +61,8 @@ class Web3UnitTest {
     @Test
     fun testSignMessage() {
         val message = "Your signature message"
-        val result = web3Manger.signMessage(message.toByteArray(), true)
+        val privateKey = "Your private key"
+        val result = web3Manger.signMessage(privateKey, message.toByteArray(), true)
         print(result)
     }
 
